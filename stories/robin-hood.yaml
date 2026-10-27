@@ -1,0 +1,207 @@
+# An example story. Copy this file to write your own — see README.md for the format.
+#
+# Every scene has:
+#   say:    what the actor says aloud (shown big on screen)
+#   notes:  stage directions only the actor sees (optional)
+# and exactly ONE way to move on:
+#   actions:   the participant does something  -> actor picks what they did
+#   question:  the participant answers          -> actor picks / types the answer
+#   donation:  the participant gives money      -> actor enters the amount
+#   next:      no input, just carry on
+#   end: true  an ending
+#
+# In `say` you can use {{donation}} (last gift), {{total}} (all gifts so far)
+# and {{answer}} (the last thing they answered).
+
+title: The Outlaw of Sherwood
+currency: "£"
+start: crossroads
+
+scenes:
+  crossroads:
+    title: The Crossroads
+    say: |
+      Halt, traveller! You stand at the edge of Sherwood Forest.
+      To the north, the Sheriff's road. To the east, the deep green wood.
+      Which way will you go?
+    notes: Gesture to the two signposts. Let the participant physically walk one way.
+    actions:
+      - label: Walks towards the Sheriff's road
+        goto: sheriff
+      - label: Walks into the forest
+        goto: forest
+      - label: Stays put / refuses to choose
+        goto: hesitate
+
+  hesitate:
+    say: |
+      Can't decide? Then the forest decides for you. A rope drops from the trees…
+    notes: Gently guide them towards the forest side.
+    next: forest
+
+  sheriff:
+    title: The Sheriff's Toll
+    say: |
+      "Not so fast!" barks the Sheriff's man. "All who pass pay the Sheriff's toll."
+      He holds out his helmet. How much will you give him?
+    notes: Hold out the helmet / donation bucket. Enter whatever they put in — 0 if nothing.
+    donation:
+      prompt: How much went in the helmet?
+      quick: [0, 1, 2, 5, 10, 20]
+      tiers:
+        - min: 0
+          label: Nothing / pennies
+          goto: dungeon
+        - min: 2
+          label: A fair toll
+          goto: waved_through
+        - min: 10
+          label: Generous
+          goto: sheriff_suspicious
+
+  dungeon:
+    title: The Dungeon
+    say: |
+      "{{donation}}? An insult!" You are thrown into the Sheriff's dungeon.
+      Through the bars, a whisper: "Psst. Answer me this and I'll pick the lock.
+      What colour does Robin Hood wear?"
+    notes: Crouch as if behind bars. Accept any shade of green.
+    question:
+      ask: What colour does Robin Hood wear?
+      answers:
+        - label: Green
+          match: [lincoln green, dark green, forest green]
+          goto: escape
+        - label: Something else
+          goto: still_locked
+      otherwise: still_locked
+
+  still_locked:
+    say: |
+      "{{answer}}?! You're no friend of Robin's." The whisperer slinks away.
+      Perhaps a coin for the guard would help?
+    donation:
+      prompt: Bribe for the guard?
+      quick: [0, 1, 2, 5]
+      tiers:
+        - min: 0
+          label: No bribe
+          goto: ending_dungeon
+        - min: 1
+          label: Any bribe
+          goto: escape
+
+  escape:
+    say: |
+      Click. The lock springs open and you slip out into the night,
+      straight into the arms of the Merry Men.
+    next: camp
+
+  waved_through:
+    say: |
+      The guard bites your coin, grunts, and waves you through.
+      But as you pass, you spot a hooded figure in the trees, beckoning…
+    next: forest
+
+  sheriff_suspicious:
+    say: |
+      "{{donation}}?" The Sheriff's man narrows his eyes. "Nobody pays that much honestly.
+      Who are you working for?"
+    question:
+      ask: Who are you working for?
+      answers:
+        - label: Robin Hood
+          match: [robin, robin hood, the outlaw]
+          goto: dungeon
+        - label: The Sheriff / the King / nobody
+          match: [the sheriff, sheriff, the king, king, nobody, no one, myself]
+          goto: waved_through
+      otherwise: waved_through
+
+  forest:
+    title: Into Sherwood
+    say: |
+      The trees close in. A tall man in green drops from a branch.
+      "I am Little John. None pass this bridge until they best me — at a riddle!
+      What has roots that nobody sees, is taller than trees, up up it goes, and yet never grows?"
+    notes: Little John voice. The answer is "a mountain". Give them a few seconds.
+    question:
+      ask: What has roots nobody sees, and is taller than trees?
+      answers:
+        - label: A mountain
+          match: [mountain, mountains, a hill, hill]
+          goto: camp
+        - label: A tree / wrong
+          goto: quarterstaff
+      otherwise: quarterstaff
+
+  quarterstaff:
+    say: |
+      "{{answer}}? Wrong!" Little John raises his quarterstaff. "Then we fight!"
+      What do you do?
+    notes: Mime a quarterstaff. Let the participant react.
+    actions:
+      - label: Fights back
+        goto: river
+      - label: Runs away
+        goto: crossroads
+      - label: Offers a handshake / talks it out
+        goto: camp
+
+  river:
+    say: |
+      SPLASH! Little John knocks you into the river. He roars with laughter
+      and hauls you out. "You've spirit! Come — meet Robin."
+    next: camp
+
+  camp:
+    title: The Outlaws' Camp
+    say: |
+      Robin Hood rises from the campfire. "Welcome, friend. We rob from the rich
+      and give to the poor. The village of Edwinstowe is starving this winter.
+      Will you give to our cause?"
+    notes: |
+      This is the main ask. Hold out the purse. Total so far: {{total}}.
+    donation:
+      prompt: How much did they give Robin?
+      quick: [0, 1, 2, 5, 10, 20, 50]
+      tiers:
+        - min: 0
+          label: Nothing
+          goto: ending_traveller
+        - min: 1
+          label: Something
+          goto: ending_merry
+        - min: 20
+          label: A fortune
+          goto: ending_legend
+
+  ending_dungeon:
+    title: "Ending: The Dungeon"
+    say: |
+      The torch gutters out. You'll be here a while.
+      (But the story of Sherwood is never really over — come back and try again!)
+    end: true
+
+  ending_traveller:
+    title: "Ending: The Traveller"
+    say: |
+      Robin nods. "Not everyone can give. Go safely, traveller —
+      and remember the road back to Sherwood."
+    end: true
+
+  ending_merry:
+    title: "Ending: A Merry Man"
+    say: |
+      "{{donation}} will buy bread for a family this week!" Robin hands you a feather
+      from his cap. "Kneel. I name you one of my Merry Men."
+    notes: Hand over a feather. Applause from the cast.
+    end: true
+
+  ending_legend:
+    title: "Ending: Legend of Sherwood"
+    say: |
+      Robin stares at the purse. "{{total}} in all! You've fed the whole village!"
+      The outlaws lift you onto their shoulders. Songs will be sung of you.
+    notes: Big finish — ring the bell, everyone cheers.
+    end: true

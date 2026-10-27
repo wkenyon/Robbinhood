@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Story Console</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="story-title" id="story-title">Loading…</span>
+        <span class="scene-title" id="scene-title"></span>
+      </div>
+      <div class="raised" title="Donated by this participant">
+        <span class="raised-label">This participant</span>
+        <span class="raised-amount" id="run-total">—</span>
+      </div>
+      <nav class="tools">
+        <button id="btn-back" title="Undo last step (← key)">← Back</button>
+        <select id="jump" title="Jump to any scene"></select>
+        <button id="btn-new" title="Start again with a new participant">New participant</button>
+        <button id="btn-menu" aria-haspopup="true" aria-expanded="false">⋯</button>
+      </nav>
+      <div class="menu" id="menu" hidden>
+        <button id="btn-load">Open story file…</button>
+        <button id="btn-edit">Edit story</button>
+        <button id="btn-export">Export log (CSV)</button>
+        <button id="btn-reset-default">Reload example story</button>
+        <button id="btn-clear-ledger">Clear session totals</button>
+        <input type="file" id="file-input" accept=".yaml,.yml,.txt" hidden />
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="stage" id="stage" aria-live="polite">
+        <div class="errors" id="errors" hidden></div>
+        <article class="card say-card">
+          <div class="label">Say</div>
+          <div class="say" id="say"></div>
+        </article>
+        <aside class="notes" id="notes" hidden>
+          <div class="label">Stage notes</div>
+          <div id="notes-body"></div>
+        </aside>
+        <section class="card input-card" id="input"></section>
+      </section>
+
+      <aside class="side">
+        <section class="card">
+          <h2>This participant</h2>
+          <ol class="log" id="log"></ol>
+        </section>
+        <section class="card">
+          <h2>Session</h2>
+          <dl class="ledger">
+            <dt>Participants finished</dt><dd id="ledger-runs">0</dd>
+            <dt>Raised (finished)</dt><dd id="ledger-total">0</dd>
+          </dl>
+          <p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>9</kbd> pick an option, <kbd>Enter</kbd> continue, <kbd>←</kbd> back.</p>
+        </section>
+      </aside>
+    </main>
+
+    <dialog id="editor" class="editor">
+      <form method="dialog" class="editor-inner">
+        <header>
+          <h2>Edit story</h2>
+          <span class="hint">YAML — see README.md for the format. Changes are saved in this browser.</span>
+        </header>
+        <textarea id="editor-text" spellcheck="false"></textarea>
+        <div class="editor-status" id="editor-status"></div>
+        <footer>
+          <button type="button" id="editor-download">Download .yaml</button>
+          <span class="spacer"></span>
+          <button value="cancel">Cancel</button>
+          <button type="button" id="editor-apply" class="primary">Apply &amp; restart</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

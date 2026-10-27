@@ -1,0 +1,12 @@
+{
+  "name": "robbinhood",
+  "version": "1.0.0",
+  "description": "A choose-your-own-adventure console for a live actor, driven by a YAML story file.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "check": "node scripts/check-story.js"
+  }
+}
