@@ -27,6 +27,34 @@ It is a static site (`index.html`, `styles.css`, `src/`, `vendor/`, `stories/`),
 so you can also host it on GitHub Pages or any web server. It has to be served
 over http(s). Opening `index.html` straight from disk won't work.
 
+### Editing and publishing on GitHub
+
+The site is published to **GitHub Pages** at `https://<owner>.github.io/<repo>/`
+(for this repo, https://wkenyon.github.io/Robbinhood/).
+
+**One-time setup:** in the repo on GitHub, go to **Settings → Pages**. Under
+**Build and deployment → Source**, choose **GitHub Actions**. Then re-run the
+latest "Check & publish" workflow from the **Actions** tab, or just commit something.
+
+**To change the story:**
+
+1. On GitHub, open `stories/robin-hood.yaml` and click the ✏️ pencil. From the live
+   site, **⋯ → Edit story on GitHub** takes you straight there.
+2. Make your changes and click **Commit changes**.
+3. The **Check & publish** workflow checks the story and republishes the site.
+   This takes about a minute. The Actions tab shows a green tick when it is live.
+   The site's Session panel shows which commit it is running.
+
+If the story has a mistake (bad indentation, a `goto` to a scene that doesn't exist…),
+the workflow fails with a red ✗ and the live site keeps the previous version.
+Open the failed run to see the exact problem, fix the file and commit again.
+
+Only commits to the repo's default branch are published. Commits on other
+branches and pull requests are still checked.
+
+To publish more than one story, add more files to `stories/`. Open each one with
+`?story=stories/<file>.yaml`, e.g. `https://wkenyon.github.io/Robbinhood/?story=stories/my-show.yaml`.
+
 ### Loading a story
 
 The app loads `stories/robin-hood.yaml` by default. To use a different story:
@@ -36,8 +64,9 @@ The app loads `stories/robin-hood.yaml` by default. To use a different story:
 - **⋯ → Edit story** to edit in the browser. It checks your story as you type,
   and **Download .yaml** saves a copy.
 
-A story that was opened or edited is remembered in that browser until you
-choose **⋯ → Reload example story**.
+A story that was opened or edited in the app is saved only in that browser.
+Everyone else still sees the published version. While a browser is using its own
+copy, a banner says so. Choose **⋯ → Use published story** to go back to the file on GitHub.
 
 ## The actor's screen
 

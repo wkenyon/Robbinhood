@@ -47,18 +47,38 @@ function saveRun() {
 
 async function boot() {
   const param = new URLSearchParams(location.search).get("story");
+  const path = param || DEFAULT_STORY;
   const saved = !param && loadJSON(KEYS.text);
+  showDeployInfo(path);
   try {
     if (saved?.text) {
       useStoryText(saved.text, { resume: true });
     } else {
-      const res = await fetch(param || DEFAULT_STORY, { cache: "no-cache" });
-      if (!res.ok) throw new Error(`Couldn't load ${param || DEFAULT_STORY} (${res.status}).`);
+      const res = await fetch(path, { cache: "no-cache" });
+      if (!res.ok) throw new Error(`Couldn't load ${path} (${res.status}).`);
       useStoryText(await res.text(), { resume: true, persist: false });
     }
   } catch (err) {
     showErrors([err.message, "Use ⋯ → Open story file… to load one from your computer."]);
     $("story-title").textContent = "No story loaded";
+  }
+}
+
+// When deployed by the GitHub Pages workflow, deploy.json says which repo and
+// commit is live, so we can link straight to the story file's editor on GitHub.
+async function showDeployInfo(path) {
+  try {
+    const res = await fetch("deploy.json", { cache: "no-cache" });
+    if (!res.ok) return;
+    const info = await res.json();
+    const link = $("btn-github");
+    link.href = `https://github.com/${info.repo}/edit/${info.branch}/${path.replace(/^\.?\//, "")}`;
+    link.hidden = false;
+    const when = new Date(info.time).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+    $("deploy-info").textContent = `Published from commit ${info.sha.slice(0, 7)} on ${when}.`;
+    $("deploy-info").hidden = false;
+  } catch {
+    // Not deployed by the workflow (e.g. running locally); nothing to show.
   }
 }
 
@@ -76,7 +96,10 @@ function useStoryText(text, { resume = false, persist = true } = {}) {
   const saved = resume && loadJSON(KEYS.run);
   run = saved && saved.title === story.title && story.scenes[saved.run?.sceneId] ? saved.run : newRun(story);
   saveRun();
-  showErrors([], result.warnings);
+  const notes = persist
+    ? ["You're using a copy of the story saved in this browser, not the published one. Use ⋯ → Use published story to switch back."]
+    : [];
+  showErrors([], [...notes, ...result.warnings]);
   renderJumpList();
   render();
   return result;
@@ -371,7 +394,7 @@ $("btn-menu").onclick = (e) => {
   toggleMenu();
 };
 document.addEventListener("click", (e) => !menu.contains(e.target) && toggleMenu(false));
-menu.addEventListener("click", (e) => e.target.tagName === "BUTTON" && e.target.id !== "btn-load" && toggleMenu(false));
+menu.addEventListener("click", (e) => (e.target.tagName === "BUTTON" || e.target.tagName === "A") && e.target.id !== "btn-load" && toggleMenu(false));
 
 $("btn-load").onclick = () => $("file-input").click();
 $("file-input").onchange = async (e) => {
@@ -383,10 +406,10 @@ $("file-input").onchange = async (e) => {
 $("btn-edit").onclick = () => story && openEditor();
 $("btn-export").onclick = exportCSV;
 $("btn-reset-default").onclick = () => {
-  if (!confirm("Replace the current story with the example story?")) return;
+  if (!confirm("Discard any story opened or edited in this browser and load the published one?")) return;
   save(KEYS.text, null);
   save(KEYS.run, null);
-  location.href = location.pathname;
+  location.reload();
 };
 $("btn-clear-ledger").onclick = () => {
   if (!confirm("Clear the session totals and the log of finished participants?")) return;

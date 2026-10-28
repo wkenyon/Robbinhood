@@ -26,7 +26,8 @@
         <button id="btn-load">Open story file…</button>
         <button id="btn-edit">Edit story</button>
         <button id="btn-export">Export log (CSV)</button>
-        <button id="btn-reset-default">Reload example story</button>
+        <a id="btn-github" target="_blank" rel="noopener" hidden>Edit story on GitHub ↗</a>
+        <button id="btn-reset-default">Use published story</button>
         <button id="btn-clear-ledger">Clear session totals</button>
         <input type="file" id="file-input" accept=".yaml,.yml,.txt" hidden />
       </div>
@@ -58,6 +59,7 @@
             <dt>Raised (finished)</dt><dd id="ledger-total">0</dd>
           </dl>
           <p class="hint">Shortcuts: <kbd>1</kbd>–<kbd>9</kbd> pick an option, <kbd>Enter</kbd> continue, <kbd>←</kbd> back.</p>
+          <p class="hint" id="deploy-info" hidden></p>
         </section>
       </aside>
     </main>
@@ -66,7 +68,7 @@
       <form method="dialog" class="editor-inner">
         <header>
           <h2>Edit story</h2>
-          <span class="hint">YAML — see README.md for the format. Changes are saved in this browser.</span>
+          <span class="hint">YAML — see README.md for the format. Changes here are saved only in this browser; to change the story for everyone, edit the file on GitHub.</span>
         </header>
         <textarea id="editor-text" spellcheck="false"></textarea>
         <div class="editor-status" id="editor-status"></div>

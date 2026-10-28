@@ -192,13 +192,22 @@ kbd {
   display: none;
 }
 
-.menu button {
+.menu button,
+.menu a {
   border: 0;
+  padding: 0.45rem 0.8rem;
+  color: inherit;
+  text-decoration: none;
   text-align: left;
   border-radius: 6px;
 }
 
-.menu button:hover {
+.menu a[hidden] {
+  display: none;
+}
+
+.menu button:hover,
+.menu a:hover {
   background: var(--accent-soft);
 }
 
