@@ -2,7 +2,8 @@
 //
 // A story is a YAML document with a title, a start scene and a map of scenes.
 // Each scene has some text for the actor to say and exactly one way of moving
-// on: `actions`, `question`, `donation`, `next`, or `end`.
+// on: `actions`, `question`, `donation`, `next`, or `end`. A participant
+// donates once, so no path may lead through more than one donation scene.
 // See README.md for the full format.
 
 import { load } from "../vendor/js-yaml.mjs";
@@ -125,15 +126,10 @@ export function normalizeStory(raw) {
       else if (tiers[0].min > 0) {
         warnings.push(`${where}: no tier for donations below ${tiers[0].min}; they will use the lowest tier.`);
       }
-      const basis = d.basis === "total" ? "total" : "this";
-      if (d.basis !== undefined && d.basis !== "total" && d.basis !== "this") {
-        errors.push(`${where}: \`donation.basis\` must be "this" or "total".`);
-      }
       scene.exit = {
         kind: "donation",
         prompt: str(d.prompt) || "How much did the participant donate?",
         quick: (Array.isArray(d.quick) ? d.quick : []).map(Number).filter(Number.isFinite),
-        basis,
         tiers,
       };
     }
@@ -141,6 +137,9 @@ export function normalizeStory(raw) {
     story.scenes[id] = scene;
   }
 
+  if (errors.length === 0) {
+    errors.push(...repeatDonations(story));
+  }
   if (errors.length === 0) {
     for (const id of unreachable(story)) {
       warnings.push(`Scene "${id}" can never be reached.`);
@@ -164,6 +163,31 @@ export function targetsOf(scene) {
     default:
       return [];
   }
+}
+
+// Each participant donates once, so a donation scene must not lead,
+// directly or later on, to another donation scene (or back to itself).
+function repeatDonations(story) {
+  const errors = [];
+  for (const scene of Object.values(story.scenes)) {
+    if (scene.exit.kind !== "donation") continue;
+    const seen = new Set();
+    const stack = [...targetsOf(scene)];
+    while (stack.length) {
+      const id = stack.pop();
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const next = story.scenes[id];
+      if (next.exit.kind === "donation") {
+        errors.push(
+          `Scene "${scene.id}" leads to another donation (scene "${id}"), but each participant only donates once.`,
+        );
+        break;
+      }
+      stack.push(...targetsOf(next));
+    }
+  }
+  return errors;
 }
 
 function unreachable(story) {

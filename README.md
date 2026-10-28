@@ -13,6 +13,9 @@ The participant can move the story forward in three ways:
 | **answers a question**    | `question:`       | taps the answer, or types what they said (matched loosely)          |
 | **makes a donation**      | `donation:`       | types the amount or taps a quick amount. The amount picks the next scene |
 
+Each participant donates once. In the example story, the donation comes first
+and its amount decides which route they take.
+
 ## Running it
 
 Requires Node 18+. There's nothing to install.
@@ -75,7 +78,7 @@ copy, a banner says so. Choose **⋯ → Use published story** to go back to the
 - **Input panel** – the buttons or amount box for this scene. It shows where each
   choice leads before you pick it.
 - **← Back** undoes the last step. **Jump to scene…** goes anywhere if things go off-script.
-- **New participant** files the current run in the session totals and starts again.
+- **New participant** adds this participant's donation to the session totals and starts again.
 - **⋯ → Export log (CSV)** downloads every step and donation for the session.
 - Keyboard: `1`–`9` pick an option, `Enter` continues, `←` goes back.
 
@@ -117,7 +120,6 @@ scenes:
     donation:                                 # the participant GIVES money
       prompt: How much went in the helmet?
       quick: [0, 1, 2, 5, 10, 20]             # one-tap amounts
-      basis: this                             # "this" gift (default) or running "total"
       tiers:                                  # highest `min` the amount reaches wins
         - min: 0
           label: Nothing / pennies
@@ -133,7 +135,7 @@ scenes:
     next: forest                              # no input, just Continue
 
   ending_legend:
-    say: You gave {{donation}} — {{total}} in all! Songs will be sung of you.
+    say: You gave {{donation}}! Songs will be sung of you.
     end: true                                 # an ending (also the default)
 ```
 
@@ -142,8 +144,7 @@ Each scene has `say` and optional `title` and `notes`. It also has **exactly one
 
 **Placeholders** in `say` and `notes`:
 
-- `{{donation}}` – the most recent donation
-- `{{total}}` – everything this participant has given
+- `{{donation}}` – what this participant gave ("nothing" before they donate)
 - `{{answer}}` – their last answer to a question
 - `{{currency}}` – the currency symbol
 
@@ -156,10 +157,14 @@ accepted automatically. Use `match` to add other spellings.
 
 **Donation tiers**: the app takes the tier with the highest `min` that the
 amount reaches. With tiers at 0, 2 and 10, a gift of £5 lands in the 2 tier.
-With `basis: total`, the running total including this gift is used instead.
+
+**One donation per participant**: a story may have several donation scenes
+(say, one per route), but no participant may pass through two of them.
+The checker rejects a story where a donation scene can lead to another.
 
 `npm run check` (and the in-app editor) flags unknown `goto` targets, missing
-pieces, scenes with more than one exit, and scenes that can never be reached.
+pieces, scenes with more than one exit, second donations, and scenes that can
+never be reached.
 
 ## Project layout
 

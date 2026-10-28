@@ -156,7 +156,7 @@ function render() {
   document.title = `${scene.title} · ${story.title}`;
   $("story-title").textContent = story.title;
   $("scene-title").textContent = scene.title;
-  $("run-total").textContent = money(run.total);
+  $("run-donation").textContent = run.donation === null || run.donation === undefined ? "—" : money(run.donation);
   $("btn-back").disabled = !run.prev;
   $("jump").value = "";
 
@@ -242,8 +242,7 @@ function renderInput(scene) {
         error.hidden = true;
         const amount = Number(field.value);
         if (field.value === "" || !Number.isFinite(amount) || amount < 0) return (preview.textContent = "");
-        const value = exit.basis === "total" ? run.total + amount : amount;
-        const t = tierFor(exit.tiers, value);
+        const t = tierFor(exit.tiers, amount);
         preview.textContent = `→ ${t.label ? `${t.label}: ` : ""}${story.scenes[t.goto].title}`;
       };
       field.addEventListener("input", update);
@@ -280,7 +279,7 @@ function renderInput(scene) {
         form,
         preview,
         quick,
-        el("details", {}, el("summary", { textContent: exit.basis === "total" ? "Tiers (based on running total)" : "Tiers" }), tiers),
+        el("details", {}, el("summary", { textContent: "Tiers" }), tiers),
         error,
       );
       setTimeout(() => field.focus(), 0);
@@ -290,7 +289,10 @@ function renderInput(scene) {
     default:
       box.replaceChildren(
         el("div", { className: "the-end", textContent: "The End" }),
-        el("p", { className: "hint", textContent: `${money(run.total)} donated by this participant.` }),
+        el("p", {
+          className: "hint",
+          textContent: run.donation === null || run.donation === undefined ? "No donation recorded." : `Donated ${money(run.donation)}.`,
+        }),
         el("button", { className: "primary big", onclick: newParticipant }, "Next participant ↵"),
       );
   }
@@ -314,7 +316,7 @@ function renderLog() {
 
 function renderLedger() {
   $("ledger-runs").textContent = String(ledger.runs.length);
-  $("ledger-total").textContent = money(ledger.runs.reduce((sum, r) => sum + r.total, 0));
+  $("ledger-total").textContent = money(ledger.runs.reduce((sum, r) => sum + (r.donation ?? 0), 0));
 }
 
 // ---------- actions ----------
@@ -334,7 +336,7 @@ function newParticipant() {
       story: story.title,
       finishedAt: new Date().toISOString(),
       ending: story.scenes[run.sceneId].title,
-      total: run.total,
+      donation: run.donation ?? 0,
       log: run.log,
     });
     save(KEYS.ledger, ledger);

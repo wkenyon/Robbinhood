@@ -27,14 +27,13 @@ scenes:
   d:
     say: Give
     donation:
-      basis: this
       tiers:
         - min: 5
           goto: win
         - min: 0
           goto: lose
   win:
-    say: You gave {{donation}}, {{total}} total. You said {{answer}}.
+    say: You gave {{donation}}. You said {{answer}}.
     end: true
   lose:
     say: Lost
@@ -64,21 +63,38 @@ test("typed answers match labels and aliases loosely, else otherwise", () => {
   assert.ok(advance(s, at, { type: "answer", text: "  " }).error);
 });
 
-test("donations pick the highest tier at or below the amount and add to total", () => {
+test("donations pick the highest tier at or below the amount and are recorded", () => {
   const s = story();
   const at = { ...newRun(s), sceneId: "d" };
   assert.equal(advance(s, at, { type: "donation", amount: 4.99 }).run.sceneId, "lose");
   const { run } = advance(s, at, { type: "donation", amount: "5" });
   assert.equal(run.sceneId, "win");
-  assert.equal(run.total, 5);
+  assert.equal(run.donation, 5);
   assert.ok(advance(s, at, { type: "donation", amount: -1 }).error);
   assert.ok(advance(s, at, { type: "donation", amount: "abc" }).error);
 });
 
-test("donation basis 'total' uses the running total", () => {
-  const s = parseStory(mini.replace("basis: this", "basis: total")).story;
-  const at = { ...newRun(s), sceneId: "d", total: 4 };
-  assert.equal(advance(s, at, { type: "donation", amount: 1 }).run.sceneId, "win");
+test("a story where a participant could donate twice is rejected", () => {
+  const twice = `
+scenes:
+  a:
+    donation:
+      tiers:
+        - min: 0
+          goto: b
+  b:
+    next: c
+  c:
+    donation:
+      tiers:
+        - min: 0
+          goto: d
+  d:
+    end: true
+`;
+  assert.match(parseStory(twice).errors.join("\n"), /"a" leads to another donation \(scene "c"\)/);
+  const loop = twice.replace("next: c", "next: a");
+  assert.match(parseStory(loop).errors.join("\n"), /"a" leads to another donation \(scene "a"\)/);
 });
 
 test("back undoes a step, jump moves anywhere", () => {
@@ -89,10 +105,11 @@ test("back undoes a step, jump moves anywhere", () => {
   assert.equal(jump(s, start, "win").sceneId, "win");
 });
 
-test("interpolate fills in donation, total and answer", () => {
+test("interpolate fills in donation and answer", () => {
   const s = story();
-  const run = { ...newRun(s), total: 12.5, lastDonation: 10, lastAnswer: "hill" };
-  assert.equal(interpolate(s.scenes.win.say, s, run), "You gave £10, £12.50 total. You said hill.");
+  assert.equal(interpolate(s.scenes.win.say, s, newRun(s)), "You gave nothing. You said ….");
+  const run = { ...newRun(s), donation: 12.5, lastAnswer: "hill" };
+  assert.equal(interpolate(s.scenes.win.say, s, run), "You gave £12.50. You said hill.");
 });
 
 test("serializeRun keeps a bounded undo chain", () => {

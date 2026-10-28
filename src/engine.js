@@ -6,8 +6,7 @@ import { normalizeAnswer } from "./story.js";
 export function newRun(story) {
   return {
     sceneId: story.start,
-    total: 0,
-    lastDonation: null,
+    donation: null, // each participant donates once
     lastAnswer: "",
     log: [],
     prev: null, // the run as it was before the last step, for "Back"
@@ -53,8 +52,7 @@ export function resolve(story, run, input) {
     case "donation": {
       const amount = Number(input.amount);
       if (!Number.isFinite(amount) || amount < 0) return { error: "Enter a donation amount (0 or more)." };
-      const value = exit.basis === "total" ? run.total + amount : amount;
-      const tier = tierFor(exit.tiers, value);
+      const tier = tierFor(exit.tiers, amount);
       return {
         goto: tier.goto,
         detail: `${story.currency}${fmt(amount)}${tier.label ? ` → ${tier.label}` : ""}`,
@@ -79,8 +77,7 @@ export function advance(story, run, input, now = new Date()) {
   const next = {
     ...run,
     sceneId: r.goto,
-    total: r.amount !== undefined ? run.total + r.amount : run.total,
-    lastDonation: r.amount !== undefined ? r.amount : run.lastDonation,
+    donation: r.amount !== undefined ? r.amount : run.donation,
     lastAnswer: r.answer !== undefined ? r.answer : run.lastAnswer,
     log: [
       ...run.log,
@@ -113,14 +110,12 @@ export function jump(story, run, sceneId, now = new Date()) {
   };
 }
 
-// Replaces {{total}}, {{donation}}, {{answer}} in scene text.
+// Replaces {{donation}}, {{answer}} and {{currency}} in scene text.
 export function interpolate(text, story, run) {
   return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (whole, key) => {
     switch (key) {
-      case "total":
-        return `${story.currency}${fmt(run.total)}`;
       case "donation":
-        return run.lastDonation === null ? "nothing" : `${story.currency}${fmt(run.lastDonation)}`;
+        return run.donation === null || run.donation === undefined ? "nothing" : `${story.currency}${fmt(run.donation)}`;
       case "answer":
         return run.lastAnswer || "…";
       case "currency":
