@@ -44,6 +44,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # GitHub Pages lets browsers cache files for 10 minutes. Stamping every
+      # asset URL with the commit stops a browser mixing old and new files.
+      - name: Stamp asset URLs with the commit
+        run: |
+          v="${GITHUB_SHA::7}"
+          sed -i -e "s#href=\"styles.css\"#href=\"styles.css?v=$v\"#" \
+                 -e "s#src=\"src/app.js\"#src=\"src/app.js?v=$v\"#" index.html
+          sed -i -E "s#(from \"\.{1,2}/[^\"?]+\.m?js)\"#\1?v=$v\"#" src/*.js
+          # 2 in index.html + 4 imports in src/; fail loudly if a pattern stopped matching.
+          test "$(cat index.html src/*.js | grep -o "?v=$v" | wc -l)" -eq 6
       - name: Record which commit is live
         run: |
           printf '{"repo":"%s","branch":"%s","sha":"%s","time":"%s"}\n' \

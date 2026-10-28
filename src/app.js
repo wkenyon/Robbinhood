@@ -50,17 +50,24 @@ async function boot() {
   const path = param || DEFAULT_STORY;
   const saved = !param && loadJSON(KEYS.text);
   showDeployInfo(path);
-  try {
-    if (saved?.text) {
-      useStoryText(saved.text, { resume: true });
-    } else {
+  let text = saved?.text;
+  if (!text) {
+    try {
       const res = await fetch(path, { cache: "no-cache" });
       if (!res.ok) throw new Error(`Couldn't load ${path} (${res.status}).`);
-      useStoryText(await res.text(), { resume: true, persist: false });
+      text = await res.text();
+    } catch (err) {
+      showErrors([err.message, "Use ⋯ → Open story file… to load one from your computer."], [], "Couldn't load the story:");
+      $("story-title").textContent = "No story loaded";
+      return;
     }
+  }
+  try {
+    useStoryText(text, { resume: true, persist: Boolean(saved?.text) });
   } catch (err) {
-    showErrors([err.message, "Use ⋯ → Open story file… to load one from your computer."]);
-    $("story-title").textContent = "No story loaded";
+    // A bug in the app rather than in the story, so don't blame the story.
+    console.error(err);
+    showErrors([`The app hit an error: ${err.message}`, "Try reloading the page. If it keeps happening, use ⋯ → Use published story."], [], "Something went wrong:");
   }
 }
 
@@ -107,7 +114,7 @@ function useStoryText(text, { resume = false, persist = true } = {}) {
 
 // ---------- rendering ----------
 
-function showErrors(errors, warnings = []) {
+function showErrors(errors, warnings = [], heading = "This story has problems:") {
   const box = $("errors");
   box.replaceChildren();
   if (!errors.length && !warnings.length) {
@@ -117,7 +124,7 @@ function showErrors(errors, warnings = []) {
   box.hidden = false;
   box.classList.toggle("only-warnings", errors.length === 0);
   box.append(
-    el("strong", { textContent: errors.length ? "This story has problems:" : "Heads up:" }),
+    el("strong", { textContent: errors.length ? heading : "Heads up:" }),
     el("ul", {}, ...[...errors, ...warnings].map((m) => el("li", { textContent: m }))),
   );
 }
